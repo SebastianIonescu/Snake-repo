@@ -3,11 +3,10 @@ import random
 import pygame
 import tkinter as tk
 from tkinter import messagebox
-import sys
 
 class cube(object):
     rows = 20
-    w = 500
+    w = 500 #width of the board
     def __init__(self, start, dirnx=1, color=(5,56,140)):
         self.pos = start
         self.dirnx = 1
@@ -48,7 +47,6 @@ class snake(object):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()
 
             keys = pygame.key.get_pressed()
 
@@ -72,20 +70,22 @@ class snake(object):
                     self.dirnx = 0
                     self.dirny = 1
                     self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
-        for index, c_ube in enumerate(self.body):
-            position = c_ube.pos[:]
-            if position in self.turns:
-                turn = self.turns[position]
-                c_ube.move(turn[0], turn[1])
-                if index == len(self.body) - 1:
-                    self.turns.pop(position)
-            else:                                                                                           #Sarpele trece dintr-o parte in alta e ecranului
-                if c_ube.dirnx == -1 and c_ube.pos[0] <= 0: c_ube.pos = (c_ube.rows-1, c_ube.pos[1])        #st
+
+        for index, c_ube in enumerate(self.body):  #parcurg fiecare element din corpul sarpelui
+            position = c_ube.pos[:]    #retin pozitia fiecarui element pe grid
+
+            if position in self.turns: #daca pozitia este una in care am modificat directia
+                turn = self.turns[position] #retin directia de deplasare
+                c_ube.move(turn[0], turn[1]) #mut elemtul in acea directie
+                if index == len(self.body) - 1: #daca este ultimul elemnt din corp
+                    self.turns.pop(position) #scot schimbarea de directie din calcul
+            else:                                                                                           #Daca nu se schimba directia de deplasare 
+                if c_ube.dirnx == -1 and c_ube.pos[0] <= 0: c_ube.pos = (c_ube.rows-1, c_ube.pos[1])        #st Daca sarpele ajunge la marginea ecranului il fac sa apara pe partea cealalata
                 elif c_ube.dirnx == 1 and c_ube.pos[0] >= c_ube.rows-1: c_ube.pos = (0, c_ube.pos[1])       #dr
                 elif c_ube.dirny == 1 and c_ube.pos[1] >= c_ube.rows-1: c_ube.pos = (c_ube.pos[0], 0)       #jos
                 elif c_ube.dirny == -1 and c_ube.pos[1] <= 0: c_ube.pos = (c_ube.pos[0], c_ube.rows - 1)    #sus
 
-                else: c_ube.move(c_ube.dirnx, c_ube.dirny)
+                else: c_ube.move(c_ube.dirnx, c_ube.dirny) #daca nu am ajuns la margine doar mut elementul in directia curenta
 
     def reset(self, pos):
         self.head = cube(pos)
@@ -108,15 +108,15 @@ class snake(object):
         elif dx == 0 and dy == -1:
             self.body.append(cube((tail.pos[0], tail.pos[1]+1)))
 
-        self.body[-1].dirnx = dx
+        self.body[-1].dirnx = dx #dau direcrtia cubului adaugat cu directia sarpelui
         self.body[-1].dirny = dy
 
     def draw(self, surface):
         for index, c_ube in enumerate(self.body):
             if index == 0:
-                c_ube.draw(surface, True)
+                c_ube.draw(surface, True) #pentru primul elemet din lista vreau da desez ochii
             else:
-                c_ube.draw(surface)
+                c_ube.draw(surface) #altfel desenez numai elelementul
 
 def drawGrid(w, rows, surface):
     sizeBtwn = w // rows
@@ -144,7 +144,7 @@ def randomSnack(rows, item):
     while True:
         x = random.randrange(rows)
         y = random.randrange(rows)
-        if len(list(filter(lambda z:z.pos == (x,y), positions))) > 0:
+        if len(list(filter(lambda z:z.pos == (x,y), positions))) > 0: # verific daca pozitia este ocupata de sarpe
             continue
         else:
             break
@@ -168,6 +168,7 @@ def main():
     global width, rows, s, snack
     width = 500
     rows = 20
+    pygame.init()
     win = pygame.display.set_mode((width, width))
     s = snake((5,56,140), (10,10))
     snack = cube(randomSnack(rows, s), color=(0, 255, 0))
@@ -179,13 +180,13 @@ def main():
         pygame.time.delay(120)
         clock.tick(10)              #viteza jocului
         s.move()
-        if s.body[0].pos == snack.pos:
-            s.addCube()
-            snack = cube(randomSnack(rows, s), color=(0, 255, 0))
+        if s.body[0].pos == snack.pos: # verific daca pozitia capului sarpelui coincide cu pozitia marului 
+            s.addCube() #daca da mai adug un element la sarpe   
+            snack = cube(randomSnack(rows, s), color=(0, 255, 0)) # generez alt mar
         for x in range(len(s.body)):
-            if s.body[x].pos in list(map(lambda z:z.pos, s.body[x+1:])):
-                print('Score: ', len(s.body))
-                message_box('You lost!', 'Play again')
+            if s.body[x].pos in list(map(lambda z:z.pos, s.body[x+1:])): #verific daca se suprapun pozitile corpului
+                print('Score: ', len(s.body)) #afisez scorul   
+                message_box('You lost!', 'Play again') 
                 s.reset((10, 10))
                 break
         redrawWindow(win)
